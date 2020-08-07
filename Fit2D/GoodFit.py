@@ -3,11 +3,12 @@ import ROOT
 from ROOT import *
 import numpy
 import sys
+import GoodFormat
 
-InFile = TFile(sys.argv[1])
-QCD = InFile.Get(sys.argv[2])
-QCD.RebinY(int(sys.argv[3]))
-QCD.RebinX(4)
+InFile = TFile("/home/th544/CMSSW_10_6_2/src/test/AvJJ_alpha_test/QCD_20"+sys.argv[1]+"_rebin.root")
+QCD = InFile.Get("AvJJ_alpha_rebin")
+QCD.RebinY(int(sys.argv[2]))
+# QCD.RebinX(4)
 C_QCD_uncut = TCanvas()
 C_QCD_uncut.cd()
 C_QCD_uncut.SetLogz()
@@ -42,8 +43,8 @@ for j in range(1,QCD.GetNbinsY()):
 	print "====---> "+ str(j)
 	Q = QCD.ProjectionX("q_"+str(j),j,j)
 	if not (Q.Integral() > 0): continue
-	if QCD.GetYaxis().GetBinCenter(j) > 0.4: continue
-	m = Q.GetMaximumBin() + int(sys.argv[4])
+	if QCD.GetYaxis().GetBinCenter(j) > 0.35: continue
+	m = Q.GetMaximumBin() + int(sys.argv[3])
 	for i in range(m,QCD.GetNbinsX()):
 			y.append(QCD.GetYaxis().GetBinCenter(j))
 			x.append(QCD.GetXaxis().GetBinCenter(i))
@@ -89,7 +90,7 @@ def MakeEPlot(V, N, E, O):
 	g.SetTitle(N)
 	C = TCanvas()
 	C.cd()
-	g.Draw("AP")
+	g.Draw("AL")
 	f.Draw("same")
 	C.Print(N+".png")
 	return f
@@ -100,7 +101,9 @@ oP0 = MakeEPlot(p0, "p0", p0e, 3)
 oP1 = MakeEPlot(p1, "p1", p1e, 3)
 
 G = TGraph2DErrors(len(x), numpy.array(x), numpy.array(y), numpy.array(z), numpy.array(ex), numpy.array(ey), numpy.array(ez))
-
+C = TCanvas()
+C.cd()
+G.Draw("AP")
 
 X = "x/13000.0"
 P0 = "([0] + [1]*y + [2]*y*y + [3]*y*y*y)"
@@ -124,9 +127,6 @@ ndof = F.GetNDF()
 chi2 = F.GetChisquare()
 print "Chi2Ndof = "  + str(chi2)+"/"+str(ndof)
 
-C = TCanvas()
-C.cd()
-G.Draw("AE")
 F.Draw("same")
 
 Qout = QCD.Clone("out")
@@ -136,10 +136,11 @@ Qout.SetStats(0)
 PullHist = TH1F("PullHist", ";pull;bins", 1200, -150, 150)
 
 Qout.GetZaxis().SetRangeUser(-6.,6.)
+globalmax = 0 # used to calibrate the pulls
 for j in range(1,QCD.GetNbinsY()):
 	Q = QCD.ProjectionX("q_"+str(j),j,j)
-	if (Q.Integral() > 0) and (QCD.GetYaxis().GetBinCenter(j)) < 0.4:
-		m = Q.GetMaximumBin() + int(sys.argv[4])
+	if (Q.Integral() > 0) and (QCD.GetYaxis().GetBinCenter(j)) < 0.35:
+		m = Q.GetMaximumBin() + int(sys.argv[3])
 		for i in range(m,QCD.GetNbinsX()):
 				q = Q.GetBinContent(i)
 				eq = Q.GetBinError(i)
@@ -148,31 +149,27 @@ for j in range(1,QCD.GetNbinsY()):
 				P = (q - est)/eq
 				Qout.SetBinContent(i,j,P)
 				PullHist.Fill(P)
+				globalmax = max(abs(P), globalmax)
 		for i in range(1,m-1):
-			Qout.SetBinContent(i,j,0)
+			continue
+			# Qout.SetBinContent(i,j,0)
 	else:
 		for i in range(1,QCD.GetNbinsX()):
-			Qout.SetBinContent(i,j,0)
+			continue
+			# Qout.SetBinContent(i,j,0)
 
 CPH = TCanvas()
 CPH.cd()
 PullHist.Draw("hist")		
-
-CFO = TCanvas()
-CFO.cd()
-F.Draw()
+		
+# Qout.GetZaxis().SetRangeUser(-globalmax - 0.2, globalmax+0.2)
+GoodFormat.pullFormat(Qout)
 
 Cpull = TCanvas()
 Cpull.cd()
+Qout.SetStats(0)
 Qout.Draw("colz")
-Cpull.Print("PULL.root")
-
-Cpull2 = TCanvas()
-Cpull2.Divide(2,1)
-Cpull2.cd(1)
-Qout.ProjectionX("xp").Draw("hist")
-Cpull2.cd(2)
-Qout.ProjectionY("yp").Draw("hist")
+Cpull.Print("PULL.png")
 
 			
 
