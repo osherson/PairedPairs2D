@@ -35,29 +35,29 @@ def MakeAToy(Hi):
 def WhichFit(F):
 	if F == "P2": return ["TMath::Power(1-(x/13000.0),[0])/(TMath::Power(x/13000.0,[1]))", 2]
 	if F == "P3": return ["TMath::Power(1-(x/13000.0),[0])/(TMath::Power(x/13000.0,[1]+([2]*TMath::Log(x/13000.0))))", 3]
+	if F == "P4": return ["TMath::Power(1.-(x/13000.0),[0])/(TMath::Power(x/13000.0,[1]+([2]*TMath::Log(x/13000.0))+([3]*TMath::Power(TMath::Log(x/13000.0),2))))", 4]
+	if F == "CDF_1": return ["(1/TMath::Power(x, [0]))*TMath::Power(1-(x/13000.0),[1])", 2]
+	if F == "CDF_2": return ["(1/TMath::Power(x, [0]))*TMath::Power(1-(x/13000.0)+TMath::Power(x/13000.0,2),[1])", 2]
+	if F == "CDF_3": return ["(1/TMath::Power(x, [0]))*TMath::Power(1-(x/13000.0)+TMath::Power(x/13000.0,2)-TMath::Power(x/13000.0,3),[1])", 2]
+	if F == "expoPoli_1": return ["TMath::Exp([0]+([1]*TMath::Log(x)))", 2]
+	if F == "expoPoli_2": return ["TMath::Exp([0]+([1]*TMath::Log(x))+([2]*TMath::Power(TMath::Log(x),2)))", 3]
+	if F == "expoPoli_3": return ["TMath::Exp([0]+([1]*TMath::Log(x))+([2]*TMath::Power(TMath::Log(x),2))+([3]*TMath::Power(TMath::Log(x),3)))", 4]
+	if F == "atlas_0": return["TMath::Power(1.0-TMath::Power(x/13000.0, 1/3.), [0])/TMath::Power(x/13000.0, [1])", 2]
+	if F == "atlas_1": return["TMath::Power(1.0-TMath::Power(x/13000.0, 1/3.), [0])/TMath::Power(x/13000.0, [1] + [2]*TMath::Log(x))", 3]
+	if F == "atlas_2": return["TMath::Power(1.0-TMath::Power(x/13000.0, 1/3.), [0])/TMath::Power(x/13000.0, [1] + [2]*TMath::Log(x) + [3]*TMath::Power(TMath::Log(x),2))", 4]
 def BigFit(F, O):
-	X = "x/13000.0"
-	P0 = "("
-	P1 = "("
-	if F == "P3": P2 = "("
-	for p in range(int(O)+1):
-		P0 += ("["+str(p)+"]"+(p*"*y"))
-		P1 += ("["+str(p+int(O)+1)+"]"+(p*"*y"))
-		if F == "P3":
-			P2 += ("["+str(p+(2*int(O))+2)+"]"+(p*"*y"))
-		if p != int(O):
-			P0+= " + "
-			P1+= " + "
-			if F == "P3": P2+= " + "
-		else:
-			P0+= ")"
-			P1+= ")"
-			if F == "P3": P2+= ")"
-	print P0
-	print P1
-	if F == "P3": print P2
-	if F == "P2": FitFunc = "TMath::Power((1.-"+X+"),"+P0+")/TMath::Power("+X+","+P1+")"
-	if F == "P3": FitFunc = "TMath::Power((1.-"+X+"),"+P0+")/TMath::Power("+X+","+P1+"+("+P2+"*TMath::Log("+X+")))"
+	npar = WhichFit(F)[1]
+	polN = int(O)
+	Ps = []
+	for n in range(npar):
+		P = "([" + str(n*(polN + 1)) + "]"
+		for m in range(polN):
+			P = P + " + [" + str(n*(polN + 1) + m + 1) + "]"
+			for o in range(m + 1): P = P + "*y"
+		P = P + ")"
+		Ps.append(P)
+	FitFunc = WhichFit(F)[0]
+	for n in range(npar): FitFunc = FitFunc.replace("[%d]" % (npar-n-1), Ps[npar-n-1])
 	return FitFunc
 	
 def AddCMSLumi(pad, fb, extra):
