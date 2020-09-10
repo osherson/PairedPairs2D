@@ -1,0 +1,18 @@
+imax *
+jmax *
+kmax *
+---------------
+shapes * * workspace_test.root test:$PROCESS
+---------------
+bin bin_test
+observation -1
+------------------------------
+bin			bin_test	bin_test
+process		sig			bkg_test
+process		0			1
+rate		650.645740176			45613.0
+--------------------------------
+signorm	lnN		1.1		-
+p0_test param		21.8071774918		0.128644512213
+p1_test param		0.00180772243249		0.0307579459787
+p2_test param		0.871787784289		0.00544187604726
