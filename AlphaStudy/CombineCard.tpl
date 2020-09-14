@@ -4,7 +4,7 @@ kmax *
 ---------------
 shapes * ch_#NAME# workspace_#NAME#.root #NAME#:$PROCESS
 ---------------
-bin bin_#NAME#
+bin ch_#NAME#
 observation -1
 ------------------------------
 bin			ch_#NAME#	ch_#NAME#
